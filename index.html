@@ -1,179 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>30-Day Discipline Tracker</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body{font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;margin:0}
-    header{padding:20px;background:#020617;text-align:center}
-    header h1{margin:0;font-size:26px}
-    nav{display:flex;justify-content:center;gap:20px;margin-top:10px}
-    nav a{color:#38bdf8;text-decoration:none;font-weight:bold;cursor:pointer}
-    .container{max-width:900px;margin:auto;padding:20px}
-    .card{background:#020617;padding:20px;border-radius:12px;margin-bottom:20px;box-shadow:0 0 15px rgba(0,0,0,.4)}
-    button{padding:10px 16px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin:4px}
-    .yes{background:#16a34a;color:white}
-    .no{background:#dc2626;color:white}
-    .water{background:#2563eb;color:white}
-    .locked{opacity:.4;pointer-events:none}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #334155;padding:8px;text-align:center}
-    th{background:#020617}
-    footer{text-align:center;padding:15px;background:#020617;color:#94a3b8}
-    #countdown{margin-top:10px;font-weight:bold;color:#facc15}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30-Day Discipline Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; background:#0f172a; color:#e5e7eb; margin:0; }
+header { padding:20px; background:#020617; text-align:center; }
+header h1 { margin:0; font-size:26px; }
+nav { display:flex; justify-content:center; gap:20px; margin-top:10px; }
+nav a { color:#38bdf8; text-decoration:none; font-weight:bold; cursor:pointer; }
+.container { max-width:900px; margin:auto; padding:20px; }
+.card { background:#020617; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 0 15px rgba(0,0,0,0.4); }
+button { padding:10px 16px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin:4px; }
+.yes { background:#16a34a; color:white; }
+.no { background:#dc2626; color:white; }
+.water { background:#2563eb; color:white; }
+.locked { opacity:0.4; pointer-events:none; }
+table { width:100%; border-collapse:collapse; }
+th, td { border:1px solid #334155; padding:8px; text-align:center; }
+th { background:#020617; }
+footer { text-align:center; padding:15px; background:#020617; color:#94a3b8; }
+#countdown { margin-top:10px; font-weight:bold; color:#facc15; }
+</style>
 </head>
 <body>
+
 <header>
-  <h1>30-Day Discipline Tracker</h1>
-  <p>Fast-Food Control & Daily Water Intake</p>
-  <nav>
-    <a onclick="showSection('today')">Today</a>
-    <a onclick="showSection('analytics')">Analytics</a>
-    <a onclick="resetAll()">Reset</a>
-  </nav>
+<h1>30-Day Discipline Tracker</h1>
+<p>Fast-Food & Daily Water Tracker</p>
+<nav>
+<a onclick="showSection('today')">Today</a>
+<a onclick="showSection('analytics')">Analytics</a>
+<a onclick="showSection('progress')">Friends Progress</a>
+<a onclick="resetAll()">Reset</a>
+</nav>
 </header>
 
 <div class="container">
-  <div id="today" class="card">
-    <h2 id="todayDate"></h2>
-    <p id="liveInfo" style="color:#94a3b8;font-size:14px;"></p>
 
-    <h3>Fast Food (Once per day)</h3>
-    <p id="fastFoodStatus">Not answered</p>
-    <button id="btnNo" class="yes" onclick="setFastFood('No')">❌ No Fast Food</button>
-    <button id="btnYes" class="no" onclick="setFastFood('Yes')">🍔 Ate Fast Food</button>
-
-    <hr style="margin:20px 0;">
-
-    <h3>Water Intake (400 ml per glass)</h3>
-    <p id="waterStatus">0 Glasses</p>
-    <button id="btnWater" class="water" onclick="addWater()">+ 1 Glass</button>
-
-    <div id="countdown"></div>
-  </div>
-
-  <div id="analytics" class="card" style="display:none;">
-    <h2>Monthly Analytics</h2>
-    <canvas id="foodChart"></canvas><br>
-    <canvas id="waterChart"></canvas>
-
-    <h3>30-Day Detailed Table</h3>
-    <table>
-      <thead>
-        <tr><th>Day</th><th>Date</th><th>Fast Food</th><th>Water (ml)</th></tr>
-      </thead>
-      <tbody id="historyTable"></tbody>
-    </table>
-  </div>
+<div id="today" class="card">
+<h2 id="todayDate"></h2>
+<h3>Fast Food (Once per day)</h3>
+<p id="fastFoodStatus">Not answered</p>
+<button id="btnNo" class="yes" onclick="setFastFood('No')">❌ No Fast Food</button>
+<button id="btnYes" class="no" onclick="setFastFood('Yes')">🍔 Ate Fast Food</button>
+<hr style="margin:20px 0;">
+<h3>Water Intake (400 ml per glass)</h3>
+<p id="waterStatus" data-val="0">0 Glasses</p>
+<button id="btnWater" class="water" onclick="addWater()">+ 1 Glass</button>
+<div id="countdown"></div>
 </div>
 
-<footer>Discipline builds freedom • Local data only</footer>
+<div id="analytics" class="card" style="display:none;">
+<h2>My Monthly Analytics</h2>
+<canvas id="foodChart"></canvas>
+<br>
+<canvas id="waterChart"></canvas>
+<h3>30-Day Table</h3>
+<table>
+<thead>
+<tr><th>Day</th><th>Date</th><th>Fast Food</th><th>Water (ml)</th></tr>
+</thead>
+<tbody id="historyTable"></tbody>
+</table>
+</div>
+
+<div id="progress" class="card" style="display:none;">
+<h2>Friends Progress</h2>
+<table>
+<thead>
+<tr><th>User</th><th>Date</th><th>Fast Food</th><th>Water (ml)</th><th>Points</th></tr>
+</thead>
+<tbody id="progressTable"></tbody>
+</table>
+</div>
+
+</div>
+
+<footer>
+Discipline builds freedom • Local Data Only
+</footer>
 
 <script>
 const GLASS_ML = 400;
-let data = JSON.parse(localStorage.getItem('tracker')||'{}');
-let foodChart=null, waterChart=null;
-
-function todayKey(){
-  const d=new Date();
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');
+let data = JSON.parse(localStorage.getItem('tracker')) || {};
+let username = localStorage.getItem('username');
+if(!username){
+  username = prompt('Enter your name:');
+  localStorage.setItem('username', username);
 }
 
+function todayKey(){ return new Date().toISOString().split('T')[0]; }
+
 function init(){
-  document.getElementById('todayDate').innerText="Today: "+new Date().toDateString();
-  updateLiveInfo();
-  setInterval(updateLiveInfo,60000);
+  document.getElementById('todayDate').innerText = 'Today: ' + new Date().toDateString();
   unlockIfNewDay();
   updateToday();
   startCountdown();
 }
 
 function unlockIfNewDay(){
-  const last=localStorage.getItem('lastFilled');
-  if(last!==todayKey()){
-    document.getElementById('btnNo').classList.remove('locked');
-    document.getElementById('btnYes').classList.remove('locked');
-  }
+  const last = localStorage.getItem('lastFilled');
+  const today = todayKey();
+  if(last !== today){ document.querySelectorAll('button').forEach(b => b.classList.remove('locked')); }
 }
 
 function setFastFood(val){
-  if(!confirm(`Confirm: ${val==='No'?'No Fast Food today':'Ate Fast Food today'} ?`)) return;
-  const k=todayKey();
-  data[k]=data[k]||{fastFood:null,water:0};
-  if(data[k].fastFood!==null) return;
-  data[k].fastFood=val;
-  localStorage.setItem('lastFilled',k);
-  save();updateToday();
+  if(!confirm('Confirm?')) return;
+  const key = todayKey();
+  if(!data[key]) data[key] = { fastFood: null, water: 0, user: username, time: new Date().toLocaleTimeString() };
+  if(data[key].fastFood !== null) return;
+  data[key].fastFood = val;
+  data[key].time = new Date().toLocaleTimeString();
+  localStorage.setItem('lastFilled', key);
+  save();
+  updateToday();
+  updateAnalytics();
+  updateProgressTable();
 }
 
 function addWater(){
-  const k=todayKey();
-  data[k]=data[k]||{fastFood:null,water:0};
-  data[k].water++;
-  save();updateToday();
+  const key = todayKey();
+  if(!data[key]) data[key] = { fastFood: null, water: 0, user: username, time: new Date().toLocaleTimeString() };
+  data[key].water++;
+  save();
+  updateToday();
+  updateAnalytics();
+  updateProgressTable();
 }
 
 function updateToday(){
-  const d=data[todayKey()];
-  if(!d) return;
-  document.getElementById('fastFoodStatus').innerText=d.fastFood??'Not answered';
-  document.getElementById('waterStatus').innerText=`${d.water} Glasses (${d.water*GLASS_ML} ml)`;
-  if(d.fastFood!==null){
-    btnNo.classList.add('locked');
-    btnYes.classList.add('locked');
+  const key = todayKey();
+  const d = data[key];
+  if(d){
+    document.getElementById('fastFoodStatus').innerText = d.fastFood ?? 'Not answered';
+    document.getElementById('waterStatus').innerText = `${d.water} Glasses (${d.water*GLASS_ML} ml)`;
+    if(d.fastFood !== null){
+      document.getElementById('btnNo').classList.add('locked');
+      document.getElementById('btnYes').classList.add('locked');
+    }
   }
 }
 
 function startCountdown(){
   function tick(){
-    const now=new Date();
-    const next=new Date();next.setHours(24,0,0,0);
-    const diff=next-now;
-    if(diff<=0){unlockIfNewDay();return;}
-    const h=Math.floor(diff/3600000),m=Math.floor(diff%3600000/60000),s=Math.floor(diff%60000/1000);
-    countdown.innerText=`Next fill in: ${h}:${m}:${s}`;
+    const now = new Date();
+    const next = new Date();
+    next.setHours(24,0,0,0);
+    const diff = next - now;
+    if(diff <= 0){ document.getElementById('countdown').innerText = 'You can fill now ✅'; unlockIfNewDay(); return; }
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    document.getElementById('countdown').innerText = `Next fill in: ${h}:${m}:${s}`;
     setTimeout(tick,1000);
   }
   tick();
 }
 
-function save(){localStorage.setItem('tracker',JSON.stringify(data));}
+function save(){ localStorage.setItem('tracker', JSON.stringify(data)); }
 
-function showSection(id){today.style.display='none';analytics.style.display='none';document.getElementById(id).style.display='block';if(id==='analytics')renderAnalytics();}
+function showSection(id){
+  document.getElementById('today').style.display='none';
+  document.getElementById('analytics').style.display='none';
+  document.getElementById('progress').style.display='none';
+  document.getElementById(id).style.display='block';
+  if(id==='analytics') updateAnalytics();
+  if(id==='progress') updateProgressTable();
+}
 
-function renderAnalytics(){
-  let yes=0,no=0,water=[];
-  historyTable.innerHTML='';
+function updateAnalytics(){
+  const tbody = document.getElementById('historyTable');
+  tbody.innerHTML='';
   Object.keys(data).sort().forEach((k,i)=>{
-    const d=data[k];
-    if(d.fastFood==='Yes')yes++;if(d.fastFood==='No')no++;
-    water.push(d.water*GLASS_ML);
-    historyTable.innerHTML+=`<tr><td>${i+1}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td></tr>`;
+    const d = data[k];
+    tbody.innerHTML += `<tr><td>${i+1}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td></tr>`;
   });
-  foodChart&&foodChart.destroy();waterChart&&waterChart.destroy();
-  foodChart=new Chart(foodChartCtx={getContext:()=>foodChart.getContext},{});
-  foodChart=new Chart(document.getElementById('foodChart'),{type:'pie',data:{labels:['No Fast Food','Ate Fast Food'],datasets:[{data:[no,yes]}]}});
-  waterChart=new Chart(document.getElementById('waterChart'),{type:'bar',data:{labels:water.map((_,i)=>`Day ${i+1}`),datasets:[{label:'Water (ml)',data:water}]}});
 }
 
-function resetAll(){if(confirm('Reset all data?')){localStorage.clear();location.reload();}}
-
-async function updateLiveInfo(){
-  const now=new Date();
-  let text=`🕒 ${now.toLocaleTimeString('en-IN')} | 📍 Noida`;
-  try{
-    const w=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5355&longitude=77.3910&current_weather=true');
-    const j=await w.json();if(j.current_weather)text+=` | 🌡 ${j.current_weather.temperature}°C | 🌤 Wind ${j.current_weather.windspeed} km/h`;
-  }catch{}
-  try{
-    const a=await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=28.5355&longitude=77.3910&current=us_aqi');
-    const j=await a.json();if(j.current&&j.current.us_aqi)text+=` | 🫁 AQI ${j.current.us_aqi}`;
-  }catch{}
-  liveInfo.innerText=text;
+function updateProgressTable(){
+  const tbody = document.getElementById('progressTable');
+  tbody.innerHTML='';
+  Object.keys(data).sort().forEach(k=>{
+    const d = data[k];
+    let points = 0;
+    if(d.fastFood==='No') points+=10;
+    points += Math.min(d.water,10)*2;
+    tbody.innerHTML += `<tr><td>${d.user}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td><td>${points}</td></tr>`;
+  });
 }
+
+function resetAll(){ if(confirm('Reset all data?')){ localStorage.clear(); location.reload(); } }
 
 init();
 </script>
