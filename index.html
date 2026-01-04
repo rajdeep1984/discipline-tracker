@@ -29,36 +29,33 @@ footer { text-align:center; padding:15px; background:#020617; color:#94a3b8; }
 
 <header>
 <h1>30-Day Discipline Tracker</h1>
-<p>Fast-Food & Daily Water Tracker</p>
+<p>Fast-Food Control & Daily Water Intake</p>
 <nav>
 <a onclick="showSection('today')">Today</a>
 <a onclick="showSection('analytics')">Analytics</a>
-<a onclick="showSection('progress')">Friends Progress</a>
 <a onclick="resetAll()">Reset</a>
 </nav>
 </header>
 
 <div class="container">
-
 <div id="today" class="card">
 <h2 id="todayDate"></h2>
+<p id="liveInfo" style="color:#94a3b8;font-size:14px;"></p>
 <h3>Fast Food (Once per day)</h3>
 <p id="fastFoodStatus">Not answered</p>
 <button id="btnNo" class="yes" onclick="setFastFood('No')">❌ No Fast Food</button>
 <button id="btnYes" class="no" onclick="setFastFood('Yes')">🍔 Ate Fast Food</button>
 <hr style="margin:20px 0;">
 <h3>Water Intake (400 ml per glass)</h3>
-<p id="waterStatus" data-val="0">0 Glasses</p>
+<p id="waterStatus">0 Glasses</p>
 <button id="btnWater" class="water" onclick="addWater()">+ 1 Glass</button>
 <div id="countdown"></div>
+<p id="dailyQuote" style="margin-top:15px; font-style:italic; color:#facc15;"></p>
 </div>
-
 <div id="analytics" class="card" style="display:none;">
-<h2>My Monthly Analytics</h2>
-<canvas id="foodChart"></canvas>
-<br>
-<canvas id="waterChart"></canvas>
-<h3>30-Day Table</h3>
+<h2>Monthly Analytics</h2>
+<canvas id="progressChart"></canvas>
+<h3>30-Day Detailed Table</h3>
 <table>
 <thead>
 <tr><th>Day</th><th>Date</th><th>Fast Food</th><th>Water (ml)</th></tr>
@@ -66,134 +63,117 @@ footer { text-align:center; padding:15px; background:#020617; color:#94a3b8; }
 <tbody id="historyTable"></tbody>
 </table>
 </div>
-
-<div id="progress" class="card" style="display:none;">
-<h2>Friends Progress</h2>
-<table>
-<thead>
-<tr><th>User</th><th>Date</th><th>Fast Food</th><th>Water (ml)</th><th>Points</th></tr>
-</thead>
-<tbody id="progressTable"></tbody>
-</table>
 </div>
-
-</div>
-
 <footer>
-Discipline builds freedom • Local Data Only
+Discipline builds freedom • Local data only
 </footer>
-
 <script>
 const GLASS_ML = 400;
 let data = JSON.parse(localStorage.getItem('tracker')) || {};
-let username = localStorage.getItem('username');
-if(!username){
-  username = prompt('Enter your name:');
-  localStorage.setItem('username', username);
-}
-
+let progressChartInstance = null;
+const quotes = [
+  'Small steps every day lead to big results.',
+  'Consistency is key.',
+  'Your discipline defines you.',
+  'Every action counts.',
+  'Stay consistent, stay winning.'
+];
 function todayKey(){ return new Date().toISOString().split('T')[0]; }
-
 function init(){
   document.getElementById('todayDate').innerText = 'Today: ' + new Date().toDateString();
+  updateLiveInfo();
+  setInterval(updateLiveInfo, 60000);
   unlockIfNewDay();
   updateToday();
   startCountdown();
+  setDailyQuote();
 }
-
 function unlockIfNewDay(){
   const last = localStorage.getItem('lastFilled');
   const today = todayKey();
-  if(last !== today){ document.querySelectorAll('button').forEach(b => b.classList.remove('locked')); }
+  if(last !== today){ document.querySelectorAll('button').forEach(b=>b.classList.remove('locked')); }
 }
-
 function setFastFood(val){
-  if(!confirm('Confirm?')) return;
+  if(!confirm(`Confirm: ${val==='No'?'No Fast Food today':'Ate Fast Food today'} ?`)) return;
   const key = todayKey();
-  if(!data[key]) data[key] = { fastFood: null, water: 0, user: username, time: new Date().toLocaleTimeString() };
-  if(data[key].fastFood !== null) return;
-  data[key].fastFood = val;
-  data[key].time = new Date().toLocaleTimeString();
+  if(!data[key]) data[key]={fastFood:null, water:0};
+  if(data[key].fastFood!==null) return;
+  data[key].fastFood=val;
   localStorage.setItem('lastFilled', key);
   save();
   updateToday();
   updateAnalytics();
-  updateProgressTable();
 }
-
 function addWater(){
   const key = todayKey();
-  if(!data[key]) data[key] = { fastFood: null, water: 0, user: username, time: new Date().toLocaleTimeString() };
+  if(!data[key]) data[key]={fastFood:null, water:0};
   data[key].water++;
   save();
   updateToday();
   updateAnalytics();
-  updateProgressTable();
 }
-
 function updateToday(){
   const key = todayKey();
   const d = data[key];
   if(d){
     document.getElementById('fastFoodStatus').innerText = d.fastFood ?? 'Not answered';
     document.getElementById('waterStatus').innerText = `${d.water} Glasses (${d.water*GLASS_ML} ml)`;
-    if(d.fastFood !== null){
-      document.getElementById('btnNo').classList.add('locked');
-      document.getElementById('btnYes').classList.add('locked');
-    }
+    if(d.fastFood!==null){ document.getElementById('btnNo').classList.add('locked'); document.getElementById('btnYes').classList.add('locked'); }
   }
 }
-
+function setDailyQuote(){
+  const key=todayKey();
+  const index=parseInt(localStorage.getItem('quoteIndex_'+key))||Math.floor(Math.random()*quotes.length);
+  localStorage.setItem('quoteIndex_'+key,index);
+  document.getElementById('dailyQuote').innerText = quotes[index];
+}
 function startCountdown(){
   function tick(){
-    const now = new Date();
-    const next = new Date();
-    next.setHours(24,0,0,0);
-    const diff = next - now;
-    if(diff <= 0){ document.getElementById('countdown').innerText = 'You can fill now ✅'; unlockIfNewDay(); return; }
-    const h = Math.floor(diff/3600000);
-    const m = Math.floor((diff%3600000)/60000);
-    const s = Math.floor((diff%60000)/1000);
-    document.getElementById('countdown').innerText = `Next fill in: ${h}:${m}:${s}`;
+    const now=new Date();
+    const next=new Date(); next.setHours(24,0,0,0);
+    const diff=next-now;
+    if(diff<=0){ document.getElementById('countdown').innerText='You can fill now ✅'; unlockIfNewDay(); return; }
+    const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+    document.getElementById('countdown').innerText=`Next fill in: ${h}:${m}:${s}`;
     setTimeout(tick,1000);
   }
   tick();
 }
-
 function save(){ localStorage.setItem('tracker', JSON.stringify(data)); }
-
 function showSection(id){
   document.getElementById('today').style.display='none';
   document.getElementById('analytics').style.display='none';
-  document.getElementById('progress').style.display='none';
   document.getElementById(id).style.display='block';
   if(id==='analytics') updateAnalytics();
-  if(id==='progress') updateProgressTable();
 }
-
 function updateAnalytics(){
-  const tbody = document.getElementById('historyTable');
-  tbody.innerHTML='';
+  const tbody=document.getElementById('historyTable'); tbody.innerHTML='';
+  const lineData=[];
   Object.keys(data).sort().forEach((k,i)=>{
-    const d = data[k];
-    tbody.innerHTML += `<tr><td>${i+1}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td></tr>`;
+    const d=data[k];
+    tbody.innerHTML+=`<tr><td>${i+1}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td></tr>`;
+    lineData.push((d.fastFood==='Yes'?1:0)+d.water*0.05);
   });
+  const ctx=document.getElementById('progressChart').getContext('2d');
+  if(progressChartInstance) progressChartInstance.destroy();
+  progressChartInstance=new Chart(ctx,{type:'line',data:{labels:lineData.map((_,i)=>`Day ${i+1}`),datasets:[{label:'Progress',data:lineData,borderColor:'#facc15',fill:false}]}});
 }
-
-function updateProgressTable(){
-  const tbody = document.getElementById('progressTable');
-  tbody.innerHTML='';
-  Object.keys(data).sort().forEach(k=>{
-    const d = data[k];
-    let points = 0;
-    if(d.fastFood==='No') points+=10;
-    points += Math.min(d.water,10)*2;
-    tbody.innerHTML += `<tr><td>${d.user}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td><td>${points}</td></tr>`;
-  });
-}
-
 function resetAll(){ if(confirm('Reset all data?')){ localStorage.clear(); location.reload(); } }
-
+async function updateLiveInfo(){
+  const now=new Date();
+  let text=`🕒 ${now.toLocaleTimeString('en-IN')} | 📍 Noida`;
+  try{
+    const w=await fetch('https://api.open-meteo.com/v1/forecast?latitude=28.5355&longitude=77.3910&current_weather=true');
+    const wj=await w.json();
+    if(wj.current_weather) text+=` | 🌡 ${wj.current_weather.temperature}°C | 🌤 Wind ${wj.current_weather.windspeed} km/h`;
+  }catch(e){ text+=' | 🌡 Weather unavailable'; }
+  try{
+    const a=await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=28.5355&longitude=77.3910&current=us_aqi');
+    const aj=await a.json();
+    if(aj.current && aj.current.us_aqi) text+=` | 🫁 AQI ${aj.current.us_aqi}`;
+  }catch(e){ text+=' | 🫁 AQI unavailable'; }
+  document.getElementById('liveInfo').innerText=text;
+}
 init();
 </script>
 </body>
