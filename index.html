@@ -22,7 +22,9 @@ table { width:100%; border-collapse:collapse; }
 th, td { border:1px solid #334155; padding:8px; text-align:center; }
 th { background:#020617; }
 footer { text-align:center; padding:15px; background:#020617; color:#94a3b8; }
-#countdown { margin-top:10px; font-weight:bold; color:#facc15; }
+#countdown, #waterTimer { font-weight:bold; color:#facc15; }
+.fastFoodContainer { display:flex; align-items:center; gap:10px; margin-bottom:15px; }
+.waterContainer { margin-top:15px; }
 </style>
 </head>
 <body>
@@ -43,13 +45,18 @@ footer { text-align:center; padding:15px; background:#020617; color:#94a3b8; }
 <p id="liveInfo" style="color:#94a3b8;font-size:14px;"></p>
 <h3>Fast Food (Once per day)</h3>
 <p id="fastFoodStatus">Not answered</p>
-<button id="btnNo" class="yes" onclick="setFastFood('No')">❌ No Fast Food</button>
-<button id="btnYes" class="no" onclick="setFastFood('Yes')">🍔 Ate Fast Food</button>
+<div class="fastFoodContainer">
+  <button id="btnNo" class="yes" onclick="setFastFood('No')">❌ No Fast Food</button>
+  <button id="btnYes" class="no" onclick="setFastFood('Yes')">🍔 Ate Fast Food</button>
+</div>
 <hr style="margin:20px 0;">
 <h3>Water Intake (400 ml per glass)</h3>
 <p id="waterStatus">0 Glasses</p>
-<button id="btnWater" class="water" onclick="addWater()">+ 1 Glass</button>
-<div id="countdown"></div>
+<div id="countdown" style="margin-bottom:10px;">Next fill in: --:--:--</div>
+<div class="waterContainer">
+  <button id="btnWater" class="water" onclick="addWater()">+ 1 Glass</button>
+  <span id="waterTimer"></span>
+</div>
 <p id="dailyQuote" style="margin-top:15px; font-style:italic; color:#facc15;"></p>
 </div>
 <div id="analytics" class="card" style="display:none;">
@@ -71,13 +78,8 @@ Discipline builds freedom • Local data only
 const GLASS_ML = 400;
 let data = JSON.parse(localStorage.getItem('tracker')) || {};
 let progressChartInstance = null;
-const quotes = [
-  'Small steps every day lead to big results.',
-  'Consistency is key.',
-  'Your discipline defines you.',
-  'Every action counts.',
-  'Stay consistent, stay winning.'
-];
+let waterCooldown = parseInt(localStorage.getItem('waterCooldown')) || 0;
+const quotes = ['Small steps every day lead to big results.','Consistency is key.','Your discipline defines you.','Every action counts.','Stay consistent, stay winning.'];
 function todayKey(){ return new Date().toISOString().split('T')[0]; }
 function init(){
   document.getElementById('todayDate').innerText = 'Today: ' + new Date().toDateString();
@@ -87,6 +89,7 @@ function init(){
   updateToday();
   startCountdown();
   setDailyQuote();
+  startWaterTimer();
 }
 function unlockIfNewDay(){
   const last = localStorage.getItem('lastFilled');
@@ -105,12 +108,32 @@ function setFastFood(val){
   updateAnalytics();
 }
 function addWater(){
+  const now = Date.now();
+  if(waterCooldown && now < waterCooldown){ return; }
   const key = todayKey();
   if(!data[key]) data[key]={fastFood:null, water:0};
   data[key].water++;
+  waterCooldown = now + 3600000;
+  localStorage.setItem('waterCooldown', waterCooldown);
   save();
   updateToday();
   updateAnalytics();
+  startWaterTimer();
+}
+function startWaterTimer(){
+  function tick(){
+    const timerElem=document.getElementById('waterTimer');
+    const now=Date.now();
+    if(!waterCooldown || now>=waterCooldown){
+      timerElem.innerText='You can drink water now ✅';
+      return;
+    }
+    const diff=waterCooldown-now;
+    const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+    timerElem.innerText=`Inform / Drink water in ${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    setTimeout(tick,1000);
+  }
+  tick();
 }
 function updateToday(){
   const key = todayKey();
@@ -152,13 +175,13 @@ function updateAnalytics(){
   Object.keys(data).sort().forEach((k,i)=>{
     const d=data[k];
     tbody.innerHTML+=`<tr><td>${i+1}</td><td>${k}</td><td>${d.fastFood??'-'}</td><td>${d.water*GLASS_ML}</td></tr>`;
-    lineData.push((d.fastFood==='Yes'?1:0)+d.water*0.05);
+    lineData.push((d.fastFood==='Yes'?1:0)+Math.min(d.water,1)*0.3);
   });
   const ctx=document.getElementById('progressChart').getContext('2d');
   if(progressChartInstance) progressChartInstance.destroy();
   progressChartInstance=new Chart(ctx,{type:'line',data:{labels:lineData.map((_,i)=>`Day ${i+1}`),datasets:[{label:'Progress',data:lineData,borderColor:'#facc15',fill:false}]}});
 }
-function resetAll(){ if(confirm('Reset all data?')){ localStorage.clear(); location.reload(); } }
+function resetAll(){ if(confirm('Reset all data?')){ localStorage.clear(); waterCooldown=0; location.reload(); } }
 async function updateLiveInfo(){
   const now=new Date();
   let text=`🕒 ${now.toLocaleTimeString('en-IN')} | 📍 Noida`;
